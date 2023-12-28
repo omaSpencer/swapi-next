@@ -31,7 +31,7 @@ const SearchForm = (props: Props) => {
 
   const searchQuery = searchParams.get('search')
   const collection = searchParams.get('collection')
-  const currentPage = searchParams.get('page')
+  const currentPage = searchParams.get('page') ?? '1'
 
   const [selectedCollection, setSelectedCollection] = useState(
     collection ?? COLLECTIONS[0].id
@@ -46,41 +46,45 @@ const SearchForm = (props: Props) => {
 
   const onSubmit = useCallback(
     async ({ query }: SearchQuerySchemaType) => {
-      console.log(query)
-      console.log(collection)
+      const params = new URLSearchParams()
 
-      //* TODO: Implement search
+      params.set('collection', collection ?? COLLECTIONS[0].id)
+      params.set('page', currentPage ?? '1')
+      params.set('search', query ?? '')
+
+      router.push('/?' + params.toString())
     },
-    [collection]
+    [collection, router, currentPage]
   )
-
-  const addDefaultParams = useCallback(() => {
-    const params = new URLSearchParams()
-
-    params.set('collection', collection ?? COLLECTIONS[0].id)
-    params.set('page', currentPage ?? '1')
-
-    router.push('/?' + params.toString())
-  }, [collection, currentPage, router])
 
   useEffect(() => {
     form.setValue('query', searchQuery ?? '')
   }, [searchQuery, form])
 
+  const addDefaultParams = useCallback(() => {
+    const params = new URLSearchParams()
+
+    params.set('collection', COLLECTIONS[0].id)
+
+    router.push('/?' + params.toString())
+  }, [router])
   useEffect(() => {
+    if (!!collection) return
     addDefaultParams()
-  }, [addDefaultParams])
+  }, [addDefaultParams, collection])
 
+  const changeCollection = useCallback(() => {
+    const params = new URLSearchParams()
+
+    params.set('collection', selectedCollection)
+    params.set('page', '1')
+    params.set('search', searchQuery ?? '')
+
+    router.push('/?' + params.toString())
+  }, [router, selectedCollection, searchQuery])
   useEffect(() => {
-    if (selectedCollection !== collection) {
-      const params = new URLSearchParams()
-
-      params.set('collection', selectedCollection)
-      params.set('page', '1')
-
-      router.push('/?' + params.toString())
-    }
-  }, [selectedCollection, collection, router])
+    changeCollection()
+  }, [selectedCollection, changeCollection])
 
   return (
     <div className='w-full max-w-sm'>
@@ -104,7 +108,7 @@ const SearchForm = (props: Props) => {
               <Button
                 type='button'
                 className={cn(
-                  'absolute right-8 top-0 opacity-60 transition-opacity duration-300 hover:opacity-100'
+                  'absolute right-10 top-0 opacity-60 transition-opacity duration-300 hover:opacity-100'
                 )}
                 variant='link'
                 size='icon'

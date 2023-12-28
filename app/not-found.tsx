@@ -15,7 +15,7 @@ const NotfoundPage = () => {
       </p>
 
       <div>
-        <Link href='/' className={cn(buttonVariants({ variant: 'default' }))}>
+        <Link href='/?' className={cn(buttonVariants({ variant: 'default' }))}>
           Go back home
         </Link>
       </div>

@@ -3,7 +3,7 @@
 import { z } from 'zod'
 
 export const SearchQuerySchema = z.object({
-  query: z.string().min(2),
+  query: z.string(),
 })
 
 export type SearchQuerySchemaType = z.infer<typeof SearchQuerySchema>

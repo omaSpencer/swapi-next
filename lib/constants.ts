@@ -24,3 +24,12 @@ export const COLLECTIONS = [
     id: 'starships',
   },
 ]
+
+export enum COLLECTION_IDS {
+  PEOPLE = 'people',
+  PLANETS = 'planets',
+  FILMS = 'films',
+  SPECIES = 'species',
+  VEHICLES = 'vehicles',
+  STARSHIPS = 'starships',
+}

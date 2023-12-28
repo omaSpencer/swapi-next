@@ -1,16 +1,26 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 import type { Films, People, Planets } from '~/types/collections'
 
-import { COLLECTIONS } from '~/lib/constants'
-import { cn, getRandomPic } from '~/lib/utils'
+import { getRandomPic } from '~/lib/utils'
+import { fetchItem } from '~/lib/data-access'
 
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
-import { Button } from './ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog'
+import Details from './details'
+import Pagination from './pagination'
 
 type Props = {
   results?: People[] | Films[] | Planets[]
@@ -27,23 +37,46 @@ const CardList = ({
   ...rest
 }: Props) => {
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   const currentPage = searchParams.get('page')
-  const collection = searchParams.get('collection')
-  const searchQuery = searchParams.get('search')
 
   const allPages = Math.ceil(count / 10)
 
-  const handlePageChange = (pageOffset: number) => {
-    const params = new URLSearchParams()
+  const [isLoading, setIsLoading] = useState(false)
+  const [itemDetails, setItemDetails] = useState<
+    People | Films | Planets | null
+  >(null)
 
-    const newPage = Number(currentPage) + pageOffset
-    params.set('collection', collection ?? COLLECTIONS[0].id)
-    params.set('page', String(newPage < 1 ? 1 : newPage))
-    params.set('search', searchQuery ?? '')
+  const handleOpenDialog = async (open: boolean, url: string) => {
+    if (!open) {
+      document.body.style.overflow = 'auto'
+      setItemDetails(null)
+      return
+    }
 
-    router.push('/?' + params.toString())
+    document.body.style.overflow = 'hidden'
+    setIsLoading(true)
+
+    const { data, error } = await fetchItem(url)
+
+    if (error) {
+      console.error(error)
+      setItemDetails(null)
+    } else if ('homeworld' in data) {
+      const { data: homeworldData, error: homeworldError } = await fetchItem(
+        data.homeworld
+      )
+
+      if (homeworldError) {
+        console.error(homeworldError)
+      } else {
+        setItemDetails({ ...data, homeworld: homeworldData })
+      }
+    } else {
+      setItemDetails(data)
+    }
+
+    setIsLoading(false)
   }
 
   return (
@@ -51,59 +84,60 @@ const CardList = ({
       {count === 0 ? (
         <h3>Not found any results.</h3>
       ) : (
-        results.map(({ url, ...rest }) => {
+        results.map(({ url, ...rest }, idx) => {
           const _name = (rest as People | Planets).name ?? (rest as Films).title
 
           return (
-            <Card key={url} className='cursor-pointer'>
-              <CardHeader>
-                <Image
-                  src={getRandomPic({
-                    width: 400,
-                    height: 300,
-                  })}
-                  alt='random pic'
-                  width={400}
-                  height={300}
-                  className='w-full rounded-lg object-cover object-cover opacity-90 transition-all duration-300 hover:scale-105 hover:opacity-100'
-                />
-              </CardHeader>
-              <CardContent>
-                <h2 className='text-2xl font-medium text-foreground transition-all duration-300 hover:text-yellow-500'>
-                  {_name}
-                </h2>
-              </CardContent>
-            </Card>
+            <Dialog
+              key={url}
+              onOpenChange={(open) => handleOpenDialog(open, url)}
+            >
+              <DialogTrigger>
+                <Card className='cursor-pointer'>
+                  <CardHeader>
+                    <Image
+                      src={getRandomPic({
+                        width: 400,
+                        height: 300,
+                        idx,
+                      })}
+                      alt='random pic'
+                      width={400}
+                      height={300}
+                      className='w-full rounded-lg object-cover object-cover opacity-90 transition-all duration-300 hover:scale-105 hover:opacity-100'
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <h2 className='text-2xl font-medium text-foreground transition-all duration-300 hover:text-yellow-500'>
+                      {_name}
+                    </h2>
+                  </CardContent>
+                </Card>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className='mb-2 flex items-center gap-2'>
+                    {_name} {isLoading && <Loader2 className='animate-spin' />}
+                  </DialogTitle>
+                  {!!itemDetails && (
+                    <DialogDescription className='max-h-[60vh] overflow-y-auto'>
+                      <Details item={itemDetails} />
+                    </DialogDescription>
+                  )}
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           )
         })
       )}
 
       {count > 0 && (
-        <div className='col-span-full flex items-center justify-between gap-4 pt-8'>
-          <Button
-            variant='link'
-            className={cn('px-0', {
-              'opacity-50': !previous,
-            })}
-            onClick={() => handlePageChange(-1)}
-          >
-            <ArrowLeftCircleIcon />
-          </Button>
-
-          <span className='text-sm font-medium'>
-            {currentPage} / {allPages}
-          </span>
-
-          <Button
-            variant='link'
-            className={cn('px-0', {
-              'opacity-50': !next,
-            })}
-            onClick={() => handlePageChange(1)}
-          >
-            <ArrowRightCircleIcon />
-          </Button>
-        </div>
+        <Pagination
+          next={next}
+          previous={previous}
+          currentPage={Number(currentPage)}
+          allPages={allPages}
+        />
       )}
     </section>
   )

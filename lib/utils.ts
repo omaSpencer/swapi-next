@@ -6,14 +6,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getRandomPic({
+  idx,
   width = 200,
   height = 300,
 }: {
+  idx?: number
   width?: number
   height?: number
 }) {
-  const random = Math.floor(Math.random() * 80)
-  return `https://picsum.photos/id/${random}/${width}/${height}`
+  return `https://picsum.photos/id/${idx}/${width}/${height}`
 }
 
 export function capitalize(str: string) {

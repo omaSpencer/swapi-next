@@ -7,8 +7,8 @@ export interface People {
   eye_color: string
   birth_year: string
   gender: string
-  homeworld: string
-  films: Array<any>
+  homeworld: string | Planets
+  films: Array<Films>
   species: Array<any>
   vehicles: Array<any>
   starships: Array<any>
@@ -25,7 +25,7 @@ export interface Films {
   producer: string
   release_date: string
   characters: Array<any>
-  planets: Array<any>
+  planets: Array<Planets>
   starships: Array<any>
   vehicles: Array<any>
   species: Array<any>
@@ -45,7 +45,7 @@ export interface Planets {
   surface_water: string
   population: string
   residents: Array<any>
-  films: Array<any>
+  films: Array<Films>
   created: string
   edited: string
   url: string

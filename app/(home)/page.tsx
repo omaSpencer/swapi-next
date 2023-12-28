@@ -16,7 +16,7 @@ const Home = async ({
   const { data, error } = await fetchCollection(
     collection as COLLECTION_IDS,
     search,
-    Number(page)
+    Number(page ?? 1)
   )
 
   if (error) {
